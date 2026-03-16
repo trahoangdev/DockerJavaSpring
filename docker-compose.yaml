@@ -1,0 +1,10 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: trahoangdev/hoangtrongtra:1.0.0
+    container_name: hoangtrongtra-app
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
