@@ -57,8 +57,25 @@ jobs:
             exit 1
           fi
 
+          # Normalize value copied from UI and reject malformed placeholders/multiline secrets.
+          DEPLOY_URL_CLEAN=$(printf '%s' "$DEPLOY_URL" | tr -d '\r')
+          if printf '%s' "$DEPLOY_URL_CLEAN" | grep -q '[{}]'; then
+            echo "DEPLOY_URL không hợp lệ: phát hiện ký tự { hoặc }."
+            echo "Hãy đặt secret DEPLOY_URL là đúng 1 dòng URL webhook, ví dụ: http://host:port/webhook/deploy/<token>"
+            exit 1
+          fi
+          if printf '%s' "$DEPLOY_URL_CLEAN" | grep -q '[[:space:]]'; then
+            echo "DEPLOY_URL không hợp lệ: chứa khoảng trắng hoặc xuống dòng."
+            echo "Hãy đặt secret DEPLOY_URL là đúng 1 dòng URL webhook."
+            exit 1
+          fi
+          if ! printf '%s' "$DEPLOY_URL_CLEAN" | grep -Eq '^https?://'; then
+            echo "DEPLOY_URL không hợp lệ: phải bắt đầu bằng http:// hoặc https://"
+            exit 1
+          fi
+
           REPO="$DEPLOY_REPO"
-          RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$DEPLOY_URL?repo=$REPO&tag=latest")
+          RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$DEPLOY_URL_CLEAN?repo=$REPO&tag=latest")
           BODY=$(echo "$RESPONSE" | sed '$d')
           CODE=$(echo "$RESPONSE" | tail -n1)
 
