@@ -49,18 +49,26 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Triển khai lên DevOps Classroom
+        env:
+          DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
         run: |
-          if [ -z "${{ secrets.DEPLOY_URL }}" ]; then
+          if [ -z "$DEPLOY_URL" ]; then
             echo "Thiếu secret DEPLOY_URL. Vào Settings > Secrets and variables > Actions để thêm."
             exit 1
           fi
 
-          REPO="${{ env.DEPLOY_REPO }}"
-          RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "${{ secrets.DEPLOY_URL }}?repo=$REPO&tag=latest")
-          BODY=$(echo "$RESPONSE" | sed "$d")
+          REPO="$DEPLOY_REPO"
+          RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$DEPLOY_URL?repo=$REPO&tag=latest")
+          BODY=$(echo "$RESPONSE" | sed '$d')
           CODE=$(echo "$RESPONSE" | tail -n1)
 
           echo "Webhook HTTP: $CODE"
+          if ! [ "$CODE" -eq "$CODE" ] 2>/dev/null; then
+            echo "Không đọc được HTTP status từ webhook response."
+            echo "Raw response:"
+            echo "$RESPONSE"
+            exit 1
+          fi
           if [ "$CODE" -lt 200 ] || [ "$CODE" -ge 300 ]; then
             echo "Deploy thất bại. Xem chi tiết trong nhóm log bên dưới."
             echo "::group::Chi tiết webhook JSON"
