@@ -8,7 +8,7 @@ on:
 
 env:
   IMAGE_NAME: trahoangdev/hoangtrongtra
-  DEPLOY_REPO: repository/docker
+  DEPLOY_REPO: trahoangdev/hoangtrongtra
 
 jobs:
   docker:
